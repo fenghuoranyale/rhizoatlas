@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RhizoAtlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="assets/atlas-style.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand"><b>RhizoAtlas</b><span>Orthogroup expression across rhizomes, roots, stems, leaves and storage organs</span></div>
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button role="tab" id="tab-gene" aria-selected="true" data-view="gene">Gene</button>
+    <button role="tab" id="tab-layers" aria-selected="false" data-view="layers">Three layers</button>
+    <button role="tab" id="tab-samples" aria-selected="false" data-view="samples">Samples</button>
+    <button role="tab" id="tab-about" aria-selected="false" data-view="about">About</button>
+  </nav>
+</div></header>
+
+<main>
+<section id="view-gene" class="wrap" aria-labelledby="tab-gene">
+  <form class="searchrow" id="search-form" autocomplete="off">
+    <label for="q" class="muted" style="position:absolute;left:-9999px">Search</label>
+    <input id="q" name="q" type="search" placeholder="Arabidopsis gene (AT1G62360), symbol (STM), orthogroup or crop gene ID">
+    <button class="btn" type="submit">Show expression</button>
+  </form>
+  <div class="examples" id="examples">Try:</div>
+  <div id="result" class="card"><span class="status">Loading the atlas…</span></div>
+  <div class="controls">
+    <span class="muted">Species</span>
+    <span class="seg" id="filter">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="rhizome" aria-pressed="false">With rhizome samples</button>
+      <button type="button" data-f="storage" aria-pressed="false">With storage organs</button>
+    </span>
+    <span class="seg" id="mode">
+      <button type="button" data-m="chart" aria-pressed="true">Matrix</button>
+      <button type="button" data-m="table" aria-pressed="false">Table</button>
+    </span>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="scroll" id="matrix-box"></div>
+</section>
+
+<section id="view-layers" class="wrap" hidden aria-labelledby="tab-layers">
+  <div style="display:grid;gap:6px">
+    <h2>Three layers shared by rhizomes</h2>
+    <p class="muted">Each score is the rhizome-minus-comparator difference in log2 expression of a gene set, measured against orthogroups matched for expression and leaf depletion in the same study, then taken as the median across studies of a species.</p>
+  </div>
+  <div class="scroll"><table class="t" id="tests"></table></div>
+  <div class="legend" id="legend2"></div>
+  <div class="scroll" id="layers-box"></div>
+  <h3>Gene sets</h3>
+  <div class="sets" id="sets"></div>
+</section>
+
+<section id="view-samples" class="wrap" hidden aria-labelledby="tab-samples">
+  <div style="display:grid;gap:6px">
+    <h2>Samples</h2>
+    <p class="muted" id="samples-sum"></p>
+  </div>
+  <div class="searchrow">
+    <label for="sq" style="position:absolute;left:-9999px">Filter samples</label>
+    <input id="sq" type="search" placeholder="Filter by species, organ, study or run">
+    <select id="so" aria-label="Organ" style="font:14px var(--f-body);padding:8px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink)"><option value="">All organs</option></select>
+  </div>
+  <div class="scroll" style="max-height:70vh"><table class="t" id="runs"></table></div>
+  <div><button class="chip" id="more" type="button" hidden>Show more</button></div>
+</section>
+
+<section id="view-about" class="wrap" hidden aria-labelledby="tab-about">
+  <div class="about" id="about"></div>
+</section>
+</main>
+<div class="tip" id="tip" hidden></div>
+
+<script defer src="assets/atlas-browser.js"></script>
+</body>
+</html>
