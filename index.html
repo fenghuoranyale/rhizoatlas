@@ -4,77 +4,206 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RhizoAtlas</title>
+<meta name="description" content="Analyze your own RNA-seq, test gene sets and find candidate genes for rhizome and storage-organ research, on an atlas of 192 plant species.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <link rel="stylesheet" href="assets/atlas-style.css">
 </head>
-<body>
+<body data-view="home">
 <header class="top"><div class="wrap">
-  <div class="brand"><b>RhizoAtlas</b><span>Orthogroup expression across rhizomes, roots, stems, leaves and storage organs</span></div>
-  <nav class="tabs" role="tablist" aria-label="Views">
-    <button role="tab" id="tab-gene" aria-selected="true" data-view="gene">Gene</button>
-    <button role="tab" id="tab-layers" aria-selected="false" data-view="layers">Three layers</button>
-    <button role="tab" id="tab-samples" aria-selected="false" data-view="samples">Samples</button>
-    <button role="tab" id="tab-about" aria-selected="false" data-view="about">About</button>
+  <a class="brand" href="#"><b>RhizoAtlas</b></a>
+  <form class="hsearch" id="hsearch" autocomplete="off" role="search">
+    <input id="q" type="search" placeholder="Search a gene" aria-label="Search a gene">
+    <div class="suggest" id="sg-q" hidden></div>
+  </form>
+  <nav class="links" aria-label="Sections">
+    <a href="#analyze" data-view="analyze"><span class="lg">Analyze your data</span><span class="sh">Analyze</span></a>
+    <a href="#score" data-view="score"><span class="lg">Score a gene set</span><span class="sh">Score</span></a>
+    <a href="#find" data-view="find"><span class="lg">Find candidates</span><span class="sh">Find</span></a>
+    <a href="#organ" data-view="organ" data-also="samples">Atlas</a>
+    <a href="#about" data-view="about">About</a>
   </nav>
 </div></header>
 
 <main>
-<section id="view-gene" class="wrap" aria-labelledby="tab-gene">
-  <form class="searchrow" id="search-form" autocomplete="off">
-    <label for="q" class="muted" style="position:absolute;left:-9999px">Search</label>
-    <input id="q" name="q" type="search" placeholder="Arabidopsis gene (AT1G62360), symbol (STM), orthogroup or crop gene ID">
-    <button class="btn" type="submit">Show expression</button>
-  </form>
-  <div class="examples" id="examples">Try:</div>
+<section id="view-home" class="home">
+  <div class="home-inner">
+    <h1 class="logo">RhizoAtlas</h1>
+    <p class="lead">Analyze your own RNA-seq, test gene sets and find candidate genes for rhizome and storage-organ research, on an atlas of <span id="h-sp">192</span> plant species.</p>
+    <form class="bigsearch" id="home-search" autocomplete="off" role="search">
+      <input id="hq" type="search" placeholder="Look up a gene: symbol, Arabidopsis ID or crop gene ID" aria-label="Look up a gene">
+      <button class="btn" type="submit">Search</button>
+      <div class="suggest" id="sg-hq" hidden></div>
+    </form>
+    <div class="examples" id="examples"></div>
+    <div class="explore">
+      <a href="#analyze" class="tile"><b>Analyze your data</b><span>Organ identity of your samples and your experiment on the atlas scale</span></a>
+      <a href="#score" class="tile"><b>Score a gene set</b><span>Is your pathway or gene list higher in rhizomes across species?</span></a>
+      <a href="#find" class="tile"><b>Find candidate genes</b><span>Gene families that consistently mark rhizomes, with IDs in five crop genomes</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="view-gene" class="wrap" hidden>
   <div id="result" class="card"><span class="status">Loading the atlas…</span></div>
-  <div class="controls">
-    <span class="muted">Species</span>
-    <span class="seg" id="filter">
-      <button type="button" data-f="all" aria-pressed="true">All</button>
-      <button type="button" data-f="rhizome" aria-pressed="false">With rhizome samples</button>
-      <button type="button" data-f="storage" aria-pressed="false">With storage organs</button>
-    </span>
-    <span class="seg" id="mode">
-      <button type="button" data-m="chart" aria-pressed="true">Matrix</button>
-      <button type="button" data-m="table" aria-pressed="false">Table</button>
-    </span>
+  <div class="card" id="expr-card">
+    <div class="card-head">
+      <h3>Expression across species</h3>
+      <div class="controls">
+        <span class="seg" id="filter" aria-label="Species shown">
+          <button type="button" data-f="all" aria-pressed="true"><span class="lg">All species</span><span class="sh">All</span></button>
+          <button type="button" data-f="rhizome" aria-pressed="false"><span class="lg">With rhizomes</span><span class="sh">Rhizome spp.</span></button>
+          <button type="button" data-f="storage" aria-pressed="false"><span class="lg">With storage organs</span><span class="sh">Storage spp.</span></button>
+        </span>
+        <span class="seg" id="mode" aria-label="Display">
+          <button type="button" data-m="chart" aria-pressed="true">Heatmap</button>
+          <button type="button" data-m="table" aria-pressed="false">Table</button>
+        </span>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="scroll plain" id="matrix-box"></div>
   </div>
-  <div class="legend" id="legend"></div>
-  <div class="scroll" id="matrix-box"></div>
 </section>
 
-<section id="view-layers" class="wrap" hidden aria-labelledby="tab-layers">
-  <div style="display:grid;gap:6px">
-    <h2>Three layers shared by rhizomes</h2>
-    <p class="muted">Each score is the rhizome-minus-comparator difference in log2 expression of a gene set, measured against orthogroups matched for expression and leaf depletion in the same study, then taken as the median across studies of a species.</p>
+<section id="view-analyze" class="wrap" hidden>
+  <div class="intro">
+    <h2>Analyze your data</h2>
+    <p class="muted">Upload gene counts from your own RNA-seq. RhizoAtlas predicts the organ identity of every sample and, when the experiment includes rhizome together with root or aerial stem, places it on the atlas scale with the article's method. Your data stay in your browser.</p>
   </div>
-  <div class="scroll"><table class="t" id="tests"></table></div>
-  <div class="legend" id="legend2"></div>
-  <div class="scroll" id="layers-box"></div>
-  <h3>Gene sets</h3>
-  <div class="sets" id="sets"></div>
+  <div class="card">
+    <div class="card-head"><h3>1 · Your count table</h3><button type="button" class="chip" id="an-example">Load example</button></div>
+    <p class="muted small">Paste or upload raw gene counts: one gene per row, one sample per column.</p>
+    <label for="an-in" class="vh">Count table</label>
+    <textarea id="an-in" class="codein" rows="5" spellcheck="false" placeholder="gene&#9;rhizome_1&#9;rhizome_2&#9;root_1&#9;root_2&#10;AT1G62360&#9;154&#9;131&#9;12&#9;9&#10;AT5G20830&#9;3021&#9;2877&#9;2470&#9;2391"></textarea>
+    <div class="actions">
+      <label class="btn ghost filebtn">Upload file<input type="file" id="an-file" accept=".tsv,.txt,.csv,.tab" hidden></label>
+      <label class="muted small" for="an-sp">Species (optional)</label>
+      <input id="an-sp" class="sel" list="an-splist" placeholder="e.g. Zingiber officinale" style="min-width:220px">
+      <datalist id="an-splist"></datalist>
+      <button class="btn" type="button" id="an-run">Analyze</button>
+    </div>
+    <p class="muted small" id="an-msg"></p>
+    <details class="info"><summary>Input format</summary><div class="det-body"><p class="muted small">Raw read counts per gene (not TPM or FPKM) for one experiment: gene IDs in the first column, one sample per further column, sample names in the first row. Gene IDs can be Arabidopsis identifiers (after mapping your genes to their best Arabidopsis hit), RefSeq gene IDs (LOC…) from the ginger, turmeric, lotus, Coptis or banana genome, or RhizoAtlas orthogroups. Include all genes, also those with zero counts. Sample names containing rhizome, root, stem or leaf are assigned to that organ automatically. Giving your species excludes it from the atlas comparisons. For many files, the same analysis runs on the command line with <a href="tools/rhizoatlas.py" download>rhizoatlas.py</a> (see About).</p></div></details>
+  </div>
+  <div class="card" id="an-samples" hidden>
+    <div class="card-head"><h3>2 · Samples and organ identity</h3><div class="actions"><button type="button" class="chip" id="an-fill">Use predictions for unassigned samples</button><button type="button" class="btn ghost" id="an-dl1">Download CSV</button></div></div>
+    <p class="muted small">Check the organ of each sample; it was guessed from the sample name where possible.</p>
+    <div class="scroll plain"><table class="t" id="an-table"></table></div>
+    <details class="info"><summary>How reliable is this?</summary><div class="det-body"><p class="muted small" id="an-valid"></p></div></details>
+  </div>
+  <div class="card" id="an-report" hidden>
+    <div class="card-head"><h3>3 · Your experiment on the atlas scale</h3><button type="button" class="btn ghost" id="an-dl2">Download gene results</button></div>
+    <p class="muted small" id="an-design"></p>
+    <div id="an-traits" class="traits"></div>
+    <div id="an-facts" class="takeaways"></div>
+    <details class="info"><summary>Details and method</summary><div class="det-body"><div class="scroll plain"><table class="t" id="an-numbers"></table></div><p class="muted small" id="an-method"></p></div></details>
+  </div>
 </section>
 
-<section id="view-samples" class="wrap" hidden aria-labelledby="tab-samples">
-  <div style="display:grid;gap:6px">
+<section id="view-score" class="wrap" hidden>
+  <div class="intro">
+    <h2>Score a gene set</h2>
+    <p class="muted">Paste a list of genes, such as a pathway, your differentially expressed genes or GWAS candidates, to test whether they are higher in rhizomes than in roots and aerial stems across species. Scores use the matched-background method of the article's trait indices.</p>
+  </div>
+  <div class="card">
+    <div class="presets" id="gs-presets"></div>
+    <label for="gs-in" class="vh">Genes</label>
+    <textarea id="gs-in" rows="4" spellcheck="false" placeholder="One gene per line, or separated by commas or spaces: Arabidopsis IDs (AT1G62360), symbols (STM), orthogroups (OG0009511) or gene IDs from the five crop genomes"></textarea>
+    <div class="actions"><button class="btn" type="button" id="gs-run">Score</button><span class="muted small" id="gs-map"></span></div>
+  </div>
+  <div id="gs-out" class="stackv" hidden>
+    <div class="grid2" id="gs-tiles"></div>
+    <div class="card">
+      <div class="card-head"><h3>Scores by species</h3><button type="button" class="btn ghost" id="gs-dl">Download CSV</button></div>
+      <div class="legend" id="gs-legend"></div>
+      <div class="scroll plain" id="gs-box"></div>
+    </div>
+  </div>
+  <details class="card more">
+    <summary><b>Published trait-index tests and method</b></summary>
+    <div class="det-body">
+      <div class="scroll plain"><table class="t" id="tests"></table></div>
+      <p class="muted small">For each study and species, the rhizome-minus-comparator difference of every expressed orthogroup is corrected by the mean difference of orthogroups matched for expression level and leaf depletion; a gene-set score is the mean corrected difference of its orthogroups, and a species score is the median over studies. P values come from one-sided sign tests across species; the published tests also report phylogenetic regression (PGLS), which this tool does not compute.</p>
+    </div>
+  </details>
+</section>
+
+<section id="view-find" class="wrap" hidden>
+  <div class="intro">
+    <h2>Find candidate genes</h2>
+    <p class="muted">Rank gene families by how consistently they differ between rhizome and root or aerial stem across species, with their gene IDs in five crop genomes. The default settings give the seven-family core set reported in the article.</p>
+  </div>
+  <div class="card filters">
+    <div class="frow"><span class="flab">Compare rhizome with</span><span class="seg" id="fd-comp"><button type="button" data-v="both" aria-pressed="true">Root and aerial stem</button><button type="button" data-v="root" aria-pressed="false">Root</button><button type="button" data-v="stem" aria-pressed="false">Aerial stem</button></span></div>
+    <div class="frow"><span class="flab">Direction</span><span class="seg" id="fd-dir"><button type="button" data-v="up" aria-pressed="true">Higher in rhizome</button><button type="button" data-v="down" aria-pressed="false">Lower in rhizome</button></span></div>
+    <div class="frow"><span class="flab">Species</span><span class="seg" id="fd-grp"><button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="monocots" aria-pressed="false">Monocots</button><button type="button" data-v="eudicots" aria-pressed="false">Eudicots</button></span></div>
+    <div class="frow"><span class="flab">FDR below</span><select id="fd-fdr" class="sel"><option>0.01</option><option selected>0.05</option><option>0.1</option><option>0.2</option></select>
+      <span class="flab" style="margin-left:12px">Gene IDs from</span><select id="fd-crop" class="sel"></select></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3 id="fd-count">Computing…</h3><button type="button" class="btn ghost" id="fd-dl">Download CSV</button></div>
+    <div class="scroll plain"><table class="t" id="fd-table"></table></div>
+    <details class="info"><summary>How candidates are selected</summary><div class="det-body"><p class="muted small" id="fd-note"></p></div></details>
+  </div>
+</section>
+
+<section id="view-organ" class="wrap" hidden>
+  <div class="subnav"><a href="#organ" aria-current="page">Organ identity</a><a href="#samples">Samples</a></div>
+  <div class="intro">
+    <h2>Organ identity</h2>
+    <p class="muted" id="organ-intro"></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Where other underground organs fall</h3><div class="legend" id="organ-legend"></div></div>
+    <div id="organ-storage" class="stack"></div>
+    <p class="muted small" id="organ-origin"></p>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Genes higher in rhizomes than in roots and stems</h3><p class="muted small" id="organ-core-sum"></p><div class="corelist" id="organ-core"></div></div>
+    <div class="card"><h3>Samples whose labels may need checking</h3><p id="organ-flags"></p><div id="organ-shifts"></div><div><button type="button" class="btn ghost" id="flag-link">Show these samples</button></div></div>
+  </div>
+  <details class="card more">
+    <summary><b>Model performance and validation</b></summary>
+    <div class="det-body">
+      <div class="kpis" id="organ-kpis"></div>
+      <p class="small" id="organ-origin-stats"></p>
+      <div class="grid2">
+        <div><h4>Validation schemes</h4><div class="scroll plain"><table class="t" id="organ-perf"></table></div><p class="muted small" id="organ-null"></p></div>
+        <div><h4>Classifier families</h4><div class="scroll plain"><table class="t" id="organ-models"></table></div><p class="muted small">Balanced accuracy on the same orthogroups. Whole-profile similarity (nearest neighbours) is weaker because it is dominated by species and study.</p></div>
+      </div>
+      <div class="grid2">
+        <div><h4>Confusion matrix, species withheld</h4><div class="scroll plain"><table class="t cm" id="organ-cm"></table></div><p class="muted small">Rows: curated organ; columns: predicted organ.</p></div>
+        <div><h4>Accuracy by nearest reference proteome</h4><div class="scroll plain"><table class="t" id="organ-prot"></table></div><p class="muted small">Accuracy drops only for ferns, lycophytes, ANA-grade species and magnoliids without a proteome from their own lineage.</p></div>
+      </div>
+      <div><h4>Top rhizome-discriminating orthogroups</h4><p class="muted small">Largest classifier coefficients for the rhizome class.</p><div class="members" id="organ-top"></div></div>
+    </div>
+  </details>
+</section>
+
+<section id="view-samples" class="wrap" hidden>
+  <div class="subnav"><a href="#organ">Organ identity</a><a href="#samples" aria-current="page">Samples</a></div>
+  <div class="intro">
     <h2>Samples</h2>
     <p class="muted" id="samples-sum"></p>
   </div>
   <div class="searchrow">
-    <label for="sq" style="position:absolute;left:-9999px">Filter samples</label>
+    <label for="sq" class="vh">Filter samples</label>
     <input id="sq" type="search" placeholder="Filter by species, organ, study or run">
-    <select id="so" aria-label="Organ" style="font:14px var(--f-body);padding:8px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink)"><option value="">All organs</option></select>
+    <select id="so" aria-label="Organ" class="sel"><option value="">All organs</option></select>
+    <select id="sf" aria-label="Classifier" class="sel"><option value="">All samples</option><option value="flag">Labels that may need checking</option><option value="mismatch">Prediction differs from label</option><option value="proj">Organs not used for training</option></select>
   </div>
+  <div class="legend" id="samples-legend"></div>
   <div class="scroll" style="max-height:70vh"><table class="t" id="runs"></table></div>
   <div><button class="chip" id="more" type="button" hidden>Show more</button></div>
 </section>
 
-<section id="view-about" class="wrap" hidden aria-labelledby="tab-about">
+<section id="view-about" class="wrap" hidden>
   <div class="about" id="about"></div>
 </section>
 </main>
+<footer class="foot muted small"><div class="wrap" id="foot"></div></footer>
 <div class="tip" id="tip" hidden></div>
 
 <script defer src="assets/atlas-browser.js"></script>
